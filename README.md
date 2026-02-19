@@ -1,5 +1,9 @@
 # Wiwi 4.0
 
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Status](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/WiwiAI/Wiwi)
+
 Модульный AI-ассистент с поддержкой:
 - **LLM** (через `llama-server` или `llama-cpp-python`)
 - **STT** (speech-to-text, `faster-whisper`)
@@ -89,6 +93,18 @@ python -m wiwi
 ```
 
 `run.sh` удобен, если у тебя setup через conda/cudnn.
+
+### One-command quick start (минимальный сценарий)
+
+Если у тебя уже поднят `llama-server` на `http://localhost:8080`, можно стартануть почти одной командой:
+
+```bash
+git clone https://github.com/WiwiAI/Wiwi.git && cd Wiwi && \
+python -m venv .venv && source .venv/bin/activate && \
+pip install -U pip && pip install -r requirements.txt && \
+cp config/example.yaml config/local.yaml && \
+python -m wiwi -c config/local.yaml
+```
 
 ### Полезные команды внутри CLI
 
@@ -187,6 +203,13 @@ black .
 MIT (см. `pyproject.toml`).
 
 ---
+
+## Known issues
+
+- Первый запуск TTS/STT на GPU может быть долгим (инициализация/компиляция).
+- Для некоторых конфигураций CUDA нужен корректный `LD_LIBRARY_PATH` (cuDNN).
+- Без запущенного `llama-server` backend `llama_server` не ответит.
+- Репозиторий не содержит модели: их нужно скачать отдельно локально.
 
 ## Roadmap (кратко)
 
