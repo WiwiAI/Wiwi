@@ -1,0 +1,25 @@
+# Wiwi4.0 Requirements
+# Базовые зависимости
+
+# Core
+pyyaml>=6.0
+rich>=13.0
+aiohttp>=3.9.0
+
+# LLM (для модуля llm_brain)
+# llama-cpp-python>=0.2.0  # Опционально, для backend=llama_cpp
+
+# STT - Speech-to-Text (опционально)
+# openai-whisper>=20231117
+# sounddevice>=0.4.6
+# numpy>=1.24.0
+
+# TTS - Text-to-Speech (опционально)
+# torch>=2.0.0
+# torchaudio>=2.0.0
+
+# Development (опционально)
+# pytest>=7.0
+# pytest-asyncio>=0.21.0
+# black>=23.0
+# ruff>=0.1.0

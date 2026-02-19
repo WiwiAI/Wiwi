@@ -1,0 +1,19 @@
+# local/meta
+.claude/
+.gemini/
+wiwi.egg-info/
+__pycache__/
+*.pyc
+
+# heavy / external / nested repos
+models/
+llama.cpp/
+chatterbox-streaming/
+
+# secrets/local config
+.env
+.env.*
+*.key
+*.pem
+config/*.local.*
+config/private*
