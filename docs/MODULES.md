@@ -1,6 +1,6 @@
 # Modules Reference
 
-Reference guide for Wiwi4.0 modules.
+Reference guide for Wiwi modules.
 
 ---
 
