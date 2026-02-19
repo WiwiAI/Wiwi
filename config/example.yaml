@@ -1,0 +1,119 @@
+# Wiwi4.0 example config (safe template)
+# Скопируй в свой файл и настрой под себя:
+#   cp config/example.yaml config/local.yaml
+#   python -m wiwi -c config/local.yaml
+
+general:
+  name: "Wiwi"
+  version: "4.0.0"
+  language: "ru"
+  log_level: "INFO"
+
+enabled_modules:
+  - "memory"
+  - "llm_brain"
+  - "cli_interface"
+  # Раскомментируй при необходимости:
+  # - "stt"
+  # - "tts"
+  # - "discord"
+
+modules:
+  llm_brain:
+    backend: "llama_server"
+    api_url: "http://localhost:8080"
+    timeout: 120
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 40
+    max_tokens: 512
+    repeat_penalty: 1.1
+    system_prompt: |
+      Ты — Wiwi, интеллектуальный ассистент общего назначения.
+      Помогай пользователю по делу, ясно и доброжелательно.
+    stop_tokens:
+      - "</s>"
+      - "<|user|>"
+      - "<|end|>"
+
+  memory:
+    backend: "in_memory"
+    max_history_length: 20
+    max_tokens_per_turn: 500
+
+  cli_interface:
+    prompt: ">>> "
+    assistant_prefix: "Wiwi: "
+    colors: true
+    history_file: "~/.wiwi_history"
+    max_input_length: 4096
+
+  stt:
+    backend: "faster_whisper"
+    model_size: "small"
+    language: "ru"
+    device: "cpu"        # или cuda:0/cuda:1
+    compute_type: "int8"  # для CPU обычно int8
+    vad:
+      threshold: 0.5
+      min_speech_duration_ms: 250
+      min_silence_duration_ms: 500
+      speech_pad_ms: 100
+    audio:
+      device: null
+      sample_rate: 16000
+      channels: 1
+      chunk_duration_ms: 64
+
+  tts:
+    backend: "xtts"
+    model: "tts_models/multilingual/multi-dataset/xtts_v2"
+    device: "cpu"         # или cuda:0
+    language: "ru"
+    sample_rate: 24000
+    auto_speak: false
+    reference_audio: "models/tts/reference.wav"
+    use_deepspeed: false
+    use_compile: false
+    use_fp16: false
+    sentence_streaming: true
+    true_streaming: true
+    speed: 1.0
+    temperature: 0.75
+    top_k: 50
+    top_p: 0.85
+    stream_chunk_size: 20
+    audio:
+      device: null
+      volume: 1.0
+
+  discord:
+    token: ""  # Вставь токен локально и НЕ коммить его
+    command_prefix: "!"
+    respond_to_mentions: true
+    respond_to_prefix: true
+    allowed_channels: []
+    allowed_users: []
+    voice_enabled: true
+    auto_join_voice: false
+    voice_channel_id: null
+    wake_word:
+      model_paths: []
+      threshold: 0.5
+      vad_threshold: 0.5
+      min_silence_ms: 700
+      max_recording_ms: 10000
+    sounds:
+      enabled: true
+
+paths:
+  models_dir: "./models"
+  plugins_dir: "./plugins"
+  cache_dir: "~/.cache/wiwi"
+  logs_dir: "./logs"
+  llama_server: "./llama.cpp/build/bin/llama-server"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: null

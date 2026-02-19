@@ -121,6 +121,13 @@ python -m wiwi
 
 Основной файл: `config/default.yaml`
 
+Также есть безопасный шаблон для старта: `config/example.yaml`.
+
+```bash
+cp config/example.yaml config/local.yaml
+python -m wiwi -c config/local.yaml
+```
+
 Критичные поля:
 - `enabled_modules` — какие модули включены
 - `modules.llm_brain.*` — LLM backend и генерация
