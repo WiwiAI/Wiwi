@@ -1,0 +1,31 @@
+name: Feature request
+description: Предложить улучшение
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую проблему решает фича?
+      placeholder: Как больно сейчас и почему это важно
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Предлагаемое решение
+      placeholder: Опиши желаемое поведение
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативы
+      placeholder: Какие варианты ты уже рассматривал(а)?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Дополнительный контекст

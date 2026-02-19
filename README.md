@@ -198,9 +198,15 @@ black .
 
 ---
 
+## Для контрибьюторов
+
+- Правила участия: `CONTRIBUTING.md`
+- Безопасность: `SECURITY.md`
+- Шаблоны issue/PR: `.github/`
+
 ## Лицензия
 
-MIT (см. `pyproject.toml`).
+MIT (см. `LICENSE`).
 
 ---
 

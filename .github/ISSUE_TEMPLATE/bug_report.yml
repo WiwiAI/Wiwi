@@ -1,0 +1,56 @@
+name: Bug report
+description: Сообщить о проблеме
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо! Перед отправкой убедитесь, что в issue нет токенов/секретов.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Что произошло?
+      description: Кратко и по шагам
+      placeholder: Опиши проблему и как её воспроизвести
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Что ожидалось?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи / traceback
+      description: Вставь релевантные логи (без секретов)
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия/коммит
+      placeholder: "например: main@8508227"
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Окружение
+      options:
+        - Linux
+        - Windows
+        - macOS
+        - Другое
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Проверки
+      options:
+        - label: Я удалил(а) секреты/токены из текста issue
+          required: true
