@@ -17,12 +17,11 @@
 
 Запись экрана с демонстрацией работы (CLI + LLM + STT/TTS realtime):
 
-<video src="./pre.mp4" controls width="960"></video>
+[![Demo preview](./docs/assets/demo-preview.gif)](./pre.mp4)
 
-- Файл: **[pre.mp4](./pre.mp4)**
+- Видео: **[pre.mp4](./pre.mp4)**
+- Превью (GIF): `docs/assets/demo-preview.gif`
 - Версия демо: `alpha` (февраль 2026)
-
-> Если встроенный плеер не отображается в вашем браузере GitHub, откройте `pre.mp4` по ссылке выше.
 
 ---
 
