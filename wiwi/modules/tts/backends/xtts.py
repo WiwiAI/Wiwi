@@ -18,6 +18,38 @@ try:
         return _original_torch_load(*args, **kwargs)
     torch.load = _patched_torch_load
 
+    # PyTorch compatibility: some XTTS/transformers code calls
+    # torch.isin(elements=..., test_elements=<int>) while newer torch
+    # expects test_element (singular) for Number.
+    _original_torch_isin = torch.isin
+    def _patched_torch_isin(*args, **kwargs):
+        # Backward/forward compatibility shim for callers that pass
+        # scalar values via test_elements/test_element.
+        if "test_elements" in kwargs and isinstance(kwargs["test_elements"], (int, float, bool)):
+            kwargs["test_element"] = kwargs.pop("test_elements")
+
+        elements = kwargs.get("elements", None)
+        test_element = kwargs.get("test_element", None)
+        test_elements = kwargs.get("test_elements", None)
+
+        # Case: torch.isin(elements=<Number>, test_element=<Number>)
+        # Newer torch versions don't accept Number/Number directly.
+        if isinstance(elements, (int, float, bool)) and isinstance(test_element, (int, float, bool)):
+            return torch.tensor(elements == test_element)
+
+        # Case: positional args with both scalars
+        if len(args) >= 2 and isinstance(args[0], (int, float, bool)) and isinstance(args[1], (int, float, bool)):
+            return torch.tensor(args[0] == args[1])
+
+        # Case: elements scalar + test_elements scalar
+        if isinstance(elements, (int, float, bool)) and isinstance(test_elements, (int, float, bool)):
+            kwargs["elements"] = torch.tensor([elements])
+            kwargs["test_elements"] = torch.tensor([test_elements])
+            return _original_torch_isin(*args, **kwargs).squeeze(0)
+
+        return _original_torch_isin(*args, **kwargs)
+    torch.isin = _patched_torch_isin
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False

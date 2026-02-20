@@ -1,0 +1,246 @@
+# Wiwi4.0 Configuration
+# Конфигурация модульного AI ассистента
+
+# Общие настройки
+general:
+  name: "Wiwi"
+  version: "4.0.0"
+  language: "ru"
+  log_level: "INFO"
+
+# Список включенных модулей (в порядке загрузки)
+# Модули загружаются с учетом зависимостей
+enabled_modules:
+  - "memory"
+  - "llm_brain"
+  - "cli_interface"
+  - "stt"  # Голосовой ввод
+  - "tts"  # Голосовой вывод (XTTS-v2)
+  #- "discord" # Модуль дискорда
+
+# Конфигурация модулей
+modules:
+  # LLM модуль (мозг)
+  llm_brain:
+    # Бэкенд: "llama_server" (рекомендуется) или "llama_cpp"
+    backend: "llama_server"
+
+    # === Настройки для llama_server ===
+    # llama-server должен быть запущен отдельно:
+    #   ./llama.cpp/build/bin/llama-server -m models/model.gguf -ngl 40 --port 8080
+    api_url: "http://localhost:8080"
+    timeout: 120  # Таймаут запроса в секундах
+
+    # === Настройки для llama_cpp (альтернатива) ===
+    # model_path: "./models/magnum-v4-12b-Q4_K_M.gguf"
+    # n_gpu_layers: 40
+    # n_threads: 12
+    # context_length: 4096
+
+    # === Общие настройки генерации ===
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 40
+    max_tokens: 512
+    repeat_penalty: 1.1
+
+    # Системный промпт
+    system_prompt: |
+      Ты — Wiwi, интеллектуальный ассистент общего назначения.
+      Твоя основная цель — помогать пользователю: отвечать на вопросы, объяснять, рассуждать, выполнять задачи и поддерживать диалог.
+      
+
+    # Стоп-токены
+    stop_tokens:
+      - "</s>"
+      - "<|user|>"
+      - "<|end|>"
+
+  # Модуль краткосрочной памяти
+  memory:
+    backend: "in_memory"
+    max_history_length: 20      # Максимум сообщений в истории
+    max_tokens_per_turn: 500    # Максимум токенов на одно сообщение
+
+  # CLI интерфейс
+  cli_interface:
+    prompt: ">>> "
+    assistant_prefix: "Wiwi: "
+    colors: true
+    history_file: "~/.wiwi_history"
+    max_input_length: 4096
+
+  # Speech-to-Text
+  stt:
+    backend: "faster_whisper"
+    model_size: "base"          # tiny, base, small, medium, large-v2, large-v3
+    language: "ru"
+    device: "cuda:1"            # cuda:1 = GTX 1650 SUPER (отдельно от LLM/TTS)
+    compute_type: "int8"        # int8 = экономия VRAM, float16 = выше качество
+
+    # Voice Activity Detection (Silero VAD)
+    vad:
+      threshold: 0.5            # Порог вероятности речи (0.0-1.0)
+      min_speech_duration_ms: 250   # Минимальная длительность речи для обработки
+      min_silence_duration_ms: 500  # Тишина для завершения фразы
+      speech_pad_ms: 100        # Отступ вокруг речи (чтобы не обрезать начало)
+
+    # Захват аудио (sounddevice)
+    audio:
+      device: null              # null = микрофон по умолчанию
+      sample_rate: 16000        # 16kHz для Whisper
+      channels: 1               # Mono
+      chunk_duration_ms: 64     # 64ms chunks для VAD (минимум 512 сэмплов при 16kHz)
+
+  # Text-to-Speech
+  # Новый бэкенд на TensorRT
+  # tts:
+    # backend: "xtts_trt"
+    # device: "cuda:0"
+    # language: "ru"
+    # sample_rate: 24000
+    # auto_speak: true
+
+    # # --- Пути для TensorRT бэкенда ---
+    # # Укажите пути к скомпилированным .trt движкам и папке токенизатора
+    # trt_gpt_path: "models/trt/gpt.trt"  # FIXME: Placeholder path
+    # trt_vocoder_path: "models/trt/vocoder.trt"  # FIXME: Placeholder path
+    # tokenizer_path: "models/xtts_v2_tokenizer/" # FIXME: Placeholder path
+    # xtts_checkpoint_dir: "models/tts/xtts_v2_checkpoint/" # FIXME: Path to original XTTSv2 checkpoint for speaker encoding
+    # speaker_ref_path: "models/tts/reference.wav" # Референс для голоса
+
+    # # Настройки аудио выхода
+    # audio:
+    #   device: null
+    #   volume: 1.0
+
+  # --- Старая конфигурация для стандартного XTTS ---
+  tts:
+    backend: "xtts"               # "xtts" или "your_tts"
+  
+    # Модель (зависит от бэкенда):
+    #   - xtts: "tts_models/multilingual/multi-dataset/xtts_v2"
+    #   - your_tts: "tts_models/multilingual/multi-dataset/your_tts"
+    model: "tts_models/multilingual/multi-dataset/xtts_v2"
+  
+    device: "cuda:0"              # cuda:0 = CMP 50HX (быстрее, LLM распределён на обе GPU)
+    language: "ru"                # Язык (xtts: 17 языков вкл. ru; your_tts: en, fr-fr, pt-br)
+    sample_rate: 24000            # XTTS-v2: 24000, YourTTS: 16000
+    auto_speak: true              # Авто-включение при voice mode
+    reference_audio: "models/tts/reference.wav"  # Референс для клонирования голоса
+  
+    # === Оптимизация производительности XTTS ===
+    # DeepSpeed: 2-3x ускорение инференса (pip install deepspeed)
+    use_deepspeed: false         # Выкл для экономии VRAM и стабильного старта
+    # torch.compile: оптимизация графа (PyTorch 2.0+)
+    use_compile: false          # Выкл для экономии памяти на старте
+    # FP16: небольшое ускорение, может влиять на качество
+    use_fp16: false              # fp16 не работает с XTTS стримингом
+  
+    # === Режим стриминга ===
+    # Стриминг на уровне предложений (LLM → TTS):
+    #   true = озвучивать каждое предложение сразу (голос идёт вместе с генерацией)
+    #   false = ждать весь ответ LLM, потом озвучить целиком
+    sentence_streaming: true
+  
+    # Стриминг на уровне аудио-чанков (TTS → Speaker):
+    #   true = воспроизводить чанки сразу (true streaming)
+    #   false = собрать всё аудио, потом воспроизвести
+    true_streaming: true
+  
+    # === Параметры генерации XTTS ===
+    speed: 1.0                    # Скорость речи (1.0 = нормальная, >1.0 = быстрее)
+    temperature: 0.75             # Температура (XTTS default)
+    top_k: 50                     # Топ-K сэмплирование (XTTS default)
+    top_p: 0.85                   # Nucleus sampling (XTTS default)
+    stream_chunk_size: 20         # Размер чанка стрима (XTTS default)
+    prebuffer_chunks: 3           # Локальный аудио-пребуфер для стабильного realtime
+  
+    # Настройки аудио выхода
+    audio:
+      device: null                # null = динамики по умолчанию
+      volume: 1.0                 # Громкость (0.0-1.0)
+
+  # --- Альтернатива: Chatterbox Multilingual (23 языка, streaming) ---
+  # tts:
+  #   backend: "chatterbox"
+  #   device: "cuda:0"              # cuda:0 = CMP 50HX
+  #   language: "ru"                # ru, en, de, fr, zh, ja, ko, es, it, pt, pl, ar, hi, и др.
+  #   sample_rate: 24000            # Chatterbox native: 24000
+  #   auto_speak: true
+  #   reference_audio: "models/tts/reference.wav"  # Референс для voice cloning
+  
+  #   # === Параметры генерации Chatterbox ===
+  #   chunk_size: 50                # Размер чанка в токенах (меньше = быстрее TTFA)
+  #   exaggeration: 0.7             # Выразительность голоса (0.0-1.0)
+  #   cfg_weight: 0.3               # Classifier-free guidance (0.0-1.0)
+  #   temperature: 1.0              # Температура сэмплирования
+  
+  #   # === Оптимизация ===
+  #   use_compile: true            # torch.compile (долгий первый запуск)
+  
+  #   # Настройки аудио выхода
+  #   audio:
+  #     device: null
+  #     volume: 1.0
+
+  # Discord бот
+  discord:
+    # Токен бота (получить на https://discord.com/developers/applications)
+    token: ""  # ОБЯЗАТЕЛЬНО: вставьте ваш НОВЫЙ токен бота
+
+    # Префикс команд
+    command_prefix: "!"
+
+    # Способы обращения к боту (текстовые каналы)
+    respond_to_mentions: true     # Отвечать на @mention
+    respond_to_prefix: true       # Отвечать на "wiwi" в начале сообщения
+
+    # Ограничения доступа (пустой список = без ограничений)
+    allowed_channels: []          # ID каналов, где бот отвечает
+    allowed_users: []             # ID пользователей, которым бот отвечает
+
+    # Голосовые каналы
+    voice_enabled: true           # Включить поддержку голоса
+    auto_join_voice: false        # Автоматически подключаться к каналу при старте
+    voice_channel_id: null        # ID голосового канала для автоподключения
+
+    # Wake Word Detection (OpenWakeWord + VAD)
+    # OpenWakeWord постоянно слушает с минимальной нагрузкой (~1-3% CPU)
+    # После wake word VAD записывает команду до паузы
+    wake_word:
+      # Пути к кастомным моделям (.onnx или .tflite)
+      # Если пусто - используются встроенные модели OWW (hey_jarvis, alexa и т.д.)
+      # Для "виви" нужно обучить кастомную модель
+      model_paths: []
+        # - "models/wake_word/wiwi.onnx"
+
+      # Порог срабатывания wake word (0.0-1.0)
+      threshold: 0.5
+
+      # Порог VAD для определения речи (0.0-1.0)
+      vad_threshold: 0.5
+
+      # Минимальная тишина для завершения записи команды (мс)
+      min_silence_ms: 700
+
+      # Максимальная длительность записи команды (мс)
+      max_recording_ms: 10000
+
+    # Звуковые эффекты
+    sounds:
+      enabled: true               # Включить звуковые оповещения
+
+# Пути
+paths:
+  models_dir: "./models"
+  plugins_dir: "./plugins"
+  cache_dir: "~/.cache/wiwi"
+  logs_dir: "./logs"
+  llama_server: "./llama.cpp/build/bin/llama-server"
+
+# Настройки логирования
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: null  # Путь к файлу логов (null = только консоль)

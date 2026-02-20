@@ -338,12 +338,22 @@ class TTSModule(BaseModule):
             gc.disable()
 
             try:
-                # Minimal prebuffer - 1 chunk to avoid underflow at stream start
-                first_chunk = None
-                chunk_count = 0
-
                 # Check if we should play locally (not when Discord voice is active)
                 play_locally = not self._discord_voice_active
+                true_streaming = self._config.get("true_streaming", True)
+
+                # For local playback, optional non-streaming mode (more stable, fewer underflows)
+                if play_locally and not true_streaming:
+                    audio = self._backend.synthesize(text)
+                    self._audio_player.play(audio, blocking=True)
+                    return
+
+                # Prebuffer several chunks to reduce output underflow,
+                # while still starting before full sentence is generated.
+                prebuffer_chunks = max(1, int(self._config.get("prebuffer_chunks", 3)))
+                startup_chunks = []
+                stream_started = False
+                chunk_count = 0
 
                 # For Discord streaming: emit smaller chunks for lower latency
                 sample_rate = self._config.get("sample_rate", 24000)
@@ -363,13 +373,16 @@ class TTSModule(BaseModule):
 
                     # Only play locally if Discord voice is not active
                     if play_locally:
-                        if first_chunk is None:
-                            # Hold first chunk, start stream on second
-                            first_chunk = chunk
+                        if not stream_started:
+                            startup_chunks.append(chunk)
+                            if len(startup_chunks) >= prebuffer_chunks:
+                                # Flush prebuffer and start continuous playback
+                                for c in startup_chunks:
+                                    self._audio_player.add_audio(c)
+                                startup_chunks = []
+                                stream_started = True
                         else:
-                            if chunk_count == 2:
-                                # Now we have 2 chunks - start playback
-                                self._audio_player.add_audio(first_chunk)
+                            # Normal streaming after startup
                             self._audio_player.add_audio(chunk)
 
                     # Stream to Discord with smaller chunks
@@ -385,9 +398,10 @@ class TTSModule(BaseModule):
                             pending_chunks = []
                             pending_samples = 0
 
-                # Handle case of only 1 chunk (very short text)
-                if play_locally and first_chunk is not None and chunk_count == 1:
-                    self._audio_player.add_audio(first_chunk)
+                # Handle short utterances that ended before prebuffer was reached
+                if play_locally and startup_chunks:
+                    for c in startup_chunks:
+                        self._audio_player.add_audio(c)
 
                 self._logger.debug(f"Synthesized {chunk_count} chunks, local_playback={play_locally}")
 
